@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 #--------------------------------------------------------------------------
 
@@ -33,8 +33,7 @@ Searches for book information from the TWEslitebooks' online catalog.
 use WWW::Scraper::ISBN::Driver;
 use WWW::Mechanize;
 use Template::Extract;
-
-use Data::Dumper;
+use Text::Iconv;
 
 ###########################################################################
 #Constants                                                                #
@@ -101,44 +100,44 @@ sub search {
 		},
 	);
 
+	my $book_link = $mechanize->uri;
+
+	my $conv = Text::Iconv->new("utf-8", "big5");
+	my $content = $mechanize->content();
+	$content =~ /(<td valign="middle" align="center" height="180" style="border-bottom: #a0a882.*meta)/s;
+	$content = $conv->convert($1);
+
 	my $template = <<END;
-<!--い丁ず甧-->[% ... %]
-<img hspace=5 src="[% image_link %]"[% ... %]
-<iframe src="[% iframe %]"[% ... %]
-<td class=s10lh14ls1b[% ... %]>[% title %]</td>[% ... %]
-[% ... %]'>[% author %]<[% ... %]
-[% ... %]'>[% publisher %]<[% ... %]
-ら戳[% ... %] [% pubdate %]<br>[% ... %]
-ISBN[% ... %] [% isbn %]<br>[% ... %]
-EAN[% ... %] [% ean %]<br>[% ... %]
-计[% ... %] [% pages %]<br>
+<td valign="middle" align="center" height="180" style="border-bottom: #a0a882 [% ... %]
+<img hspace="5" src="[% image_link %]" [% ... %]
+<iframe src='[% iframe %]'[% ... %]
+s10lh14ls1b'>[% title %]</div>[% ... %]
+s9lh14ls1>[% ... %]>[% author %]<[% ... %]
+[% ... %]>[% publisher %]<[% ... %]
+ら戳 [% pubdate %]<[% ... %]
+EAN[% ean %]<br>[% ... %]
+计[% pages %]<br>
 END
 
 	my $extract = Template::Extract->new;
-	my $data = $extract->extract($template, $mechanize->content());
+	my $data = $extract->extract($template, $content);
 
 	return $self->handler("Could not extract data from TWEslitebooks result page.")
 		unless(defined $data);
 
-	$data->{title} =~ s/^\r\s*(.*)\r\s*$/$1/;
-	$data->{pubdate} =~ s/\D*(\d+)$/$1/;
-	$data->{isbn} =~ s/\D*(\d+)$/$1/;
-	$data->{ean} =~ s/\D*(\d+)$/$1/;
-	$data->{pages} =~ s/\D*(\d+)$/$1/;
+	$mechanize->get($data->{iframe});
 
-	$mechanize->get(ESLITEBOOKS.$data->{iframe});
-
-	my $tmp = $mechanize->content();
-	$tmp =~ m/﹚基.*<s>(\d+).*疭基.*Font>(\d+)/;
+	my $tmp = $conv->convert($mechanize->content());
+	$tmp =~ /﹚基.*>(\d+).*呼隔基.*>(\d+)/s;
 	my ($price_list, $price_sell) = ($1, $2);
 
 	my $bk = {
-		'isbn'		=> $data->{isbn},
+		'isbn'		=> $isbn,
 		'ean'		=> $data->{ean},
 		'title'		=> $data->{title},
 		'author'	=> $data->{author},
 		'pages'		=> $data->{pages},
-		'book_link'	=> $mechanize->uri(),
+		'book_link'	=> "$book_link",
 		'image_link'	=> ESLITEBOOKS.$data->{image_link},
 		'pubdate'	=> $data->{pubdate},
 		'publisher'	=> $data->{publisher},

@@ -26,8 +26,8 @@ SKIP: {
 	is($book->{'ean'}, '9789864175352');
 	is($book->{'title'}, '藍海策略: 開創無人競爭的全新市場');
 	like($book->{'author'}, qr/金偉燦/);
-	is($book->{'pages'}, '376');
-	is($book->{'book_link'}, 'http://www.eslitebooks.com/cgi-bin/eslite.dll/add_cart/cart_frm_calculate.jsp?PRODUCT_ID=2611393953002&cartType=book');
+	is($book->{'pages'}, '355');
+	is($book->{'book_link'}, 'http://www.eslitebooks.com/Program/Object/BookCN.aspx?PageNo=&PROD_ID=2611393953002');
 	is($book->{'image_link'}, 'http://www.eslitebooks.com/EsliteBooks/book/picture/M/2910486972006.jpg');
 	is($book->{'pubdate'}, '20050805');
 	is($book->{'publisher'}, '天下遠見出版股份有限公司');
